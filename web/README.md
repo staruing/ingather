@@ -1,18 +1,42 @@
 # Ingather (잉게더) — web app
 
-Next.js App Router + Prisma (SQLite dev) + 네이버 로그인 + Socket.io 스티커보드.
+Next.js App Router + Prisma (PostgreSQL / Neon) + 네이버 로그인 + Socket.io 스티커보드.
 
 ## 시작
 
 ```bash
 cp .env.example .env
+# Neon Connection string 2개 붙여넣기 (아래 "Neon DB" 참고)
 # NAVER_CLIENT_ID, NAVER_CLIENT_SECRET, ADMIN_NAVER_IDS 설정
 
 npm install
 npm run db:push
-npm run db:seed
 npm run dev
 ```
+
+배포(Vercel)에서는 스티커·링크 등 기본 데이터가 API 첫 요청 시 자동 생성됩니다. 로컬에서만 `npm run db:seed` 가 필요할 수 있습니다.
+
+## Neon DB (`prisma db push`가 안 될 때)
+
+1. [Neon Console](https://console.neon.tech) → 프로젝트 → **Connect**
+2. `.env`의 `DATABASE_URL` / `DIRECT_URL` 을 **SQLite(`file:./dev.db`)가 아닌** Postgres URL로 교체
+   - **Pooled** → `DATABASE_URL` (앱·Vercel)
+   - **Direct** (non-pooler) → `DIRECT_URL` (`db push`용, 없으면 Pooled URL을 둘 다에 넣어도 됨)
+   - 끝에 `?sslmode=require` 포함
+3. **`web` 폴더에서** 실행 (저장소 루트가 아님):
+
+```bash
+cd web
+npx prisma db push
+```
+
+| 증상 | 원인 |
+|------|------|
+| `URL must start with postgresql://` | `.env`가 아직 `file:./dev.db` (SQLite) |
+| `the URL must start with the protocol file:` | 예전 schema가 sqlite인데 Neon URL 사용 (지금은 postgresql) |
+| `EPERM` / `rename ... query_engine` | `npm run dev` 등이 켜져 있음 → 서버 끄고 다시 `db push` |
+
+Vercel에도 동일한 `DATABASE_URL`(Pooled)을 Environment Variables에 넣고 Redeploy하세요.
 
 http://localhost:3000 — Socket.io는 `server.ts` 커스텀 서버로 동작합니다 (`npm run dev`).
 
@@ -39,7 +63,7 @@ Git 저장소 루트에는 `web/`만 올라가 있습니다. **Vercel이 앱을 
    - `NAVER_CLIENT_ID`, `NAVER_CLIENT_SECRET` — **필수** (로컬 `.env` 값을 Vercel에도 동일하게 등록)
    - `AUTH_URL` — 선택 (`trustHost` 사용 중이면 생략 가능, 있으면 `https://your-app.vercel.app`)
    - `ADMIN_NAVER_IDS` — 관리자 네이버 ID
-   - `DATABASE_URL` — SQLite는 Vercel에서 불가 → Postgres URL + `schema.prisma` provider 변경
+   - `DATABASE_URL` — Neon **Pooled** connection string (`?sslmode=require`)
 
 Root Directory를 비워 두면 저장소 루트에 `package.json`이 없어 빌드가 실패하거나, 배포 URL이 **Vercel NOT_FOUND**를 냅니다.
 
@@ -49,7 +73,7 @@ Root Directory를 비워 두면 저장소 루트에 `package.json`이 없어 빌
 
 - [ ] `AUTH_SECRET` — `openssl rand -base64 32`
 - [ ] `AUTH_URL` — 프로덕션 도메인
-- [ ] PostgreSQL: `prisma/schema.prisma` provider를 `postgresql`로 변경, `DATABASE_URL` 설정
+- [ ] Neon `DATABASE_URL` (Pooled) — Vercel Environment Variables
 - [ ] 네이버 Callback URL 프로덕션 등록
 - [ ] Socket.io: Vercel 서버리스는 WebSocket 제한 — Railway/Fly/VM 커스텀 서버 또는 Pusher/Ably 검토
 - [ ] 업로드: `public/uploads` 대신 S3/Vercel Blob 권장
