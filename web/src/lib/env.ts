@@ -29,3 +29,40 @@ export function getAdminNaverIds(): string[] {
     .map((id) => id.trim())
     .filter(Boolean);
 }
+
+/** Runtime read — avoids bundling `undefined` at build when env is only on Vercel. */
+export function resolveAuthSecret(): string | undefined {
+  return (
+    process.env["AUTH_SECRET"] ??
+    process.env["NEXTAUTH_SECRET"]
+  );
+}
+
+export function resolveNaverOAuth(): {
+  clientId: string;
+  clientSecret: string;
+} {
+  return {
+    clientId: process.env["NAVER_CLIENT_ID"] ?? "",
+    clientSecret: process.env["NAVER_CLIENT_SECRET"] ?? "",
+  };
+}
+
+/** Auth.js — production requires AUTH_SECRET + Naver OAuth credentials */
+export function assertAuthEnvForProduction(): void {
+  if (process.env.NODE_ENV !== "production") return;
+
+  const secret = resolveAuthSecret();
+  const { clientId, clientSecret } = resolveNaverOAuth();
+
+  if (!secret || secret.length < 8) {
+    throw new Error(
+      "AUTH_SECRET is missing. Vercel → Project → Settings → Environment Variables → add AUTH_SECRET (Production), then Redeploy.",
+    );
+  }
+  if (!clientId || !clientSecret) {
+    throw new Error(
+      "NAVER_CLIENT_ID and NAVER_CLIENT_SECRET must be set in Vercel environment variables.",
+    );
+  }
+}

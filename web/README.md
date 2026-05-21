@@ -23,6 +23,28 @@ http://localhost:3000 — Socket.io는 `server.ts` 커스텀 서버로 동작합
 3. `.env`에 Client ID / Secret 입력
 4. 관리자: `ADMIN_NAVER_IDS`에 네이버 ID(숫자) 콤마 구분
 
+## Vercel 배포 (NOT_FOUND / 404 해결)
+
+Git 저장소 루트에는 `web/`만 올라가 있습니다. **Vercel이 앱을 찾으려면 Root Directory를 반드시 `web`으로 설정**해야 합니다.
+
+1. [Vercel Dashboard](https://vercel.com) → 프로젝트 → **Settings** → **General**
+2. **Root Directory** → `web` 입력 → Save
+3. **Redeploy** (Deployments → 최신 배포 → Redeploy)
+4. **Environment Variables** — `MissingSecret` / server configuration 오류는 **99% `AUTH_SECRET` 미설정**:
+   - Vercel → 프로젝트 → **Settings** → **Environment Variables** → **Add**
+   - Name: `AUTH_SECRET` / Value: 로컬과 동일하거나 `openssl rand -base64 32` 로 새로 생성
+   - Environment: **Production** (Preview도 쓰면 Preview에도 추가)
+   - 저장 후 **Deployments → Redeploy** (변수만 추가하고 재배포 안 하면 반영 안 됨)
+   - (구버전 호환) `NEXTAUTH_SECRET` 도 읽음 — 새 프로젝트는 `AUTH_SECRET`만 쓰면 됨
+   - `NAVER_CLIENT_ID`, `NAVER_CLIENT_SECRET` — **필수** (로컬 `.env` 값을 Vercel에도 동일하게 등록)
+   - `AUTH_URL` — 선택 (`trustHost` 사용 중이면 생략 가능, 있으면 `https://your-app.vercel.app`)
+   - `ADMIN_NAVER_IDS` — 관리자 네이버 ID
+   - `DATABASE_URL` — SQLite는 Vercel에서 불가 → Postgres URL + `schema.prisma` provider 변경
+
+Root Directory를 비워 두면 저장소 루트에 `package.json`이 없어 빌드가 실패하거나, 배포 URL이 **Vercel NOT_FOUND**를 냅니다.
+
+`npm run start`(`server.ts` 커스텀 서버)는 Vercel이 사용하지 않습니다. Vercel은 `next build` 결과만 서빙합니다. Socket.io 실시간 보드는 Vercel 서버리스에서 동작하지 않습니다 (페이지/API는 가능).
+
 ## 프로덕션 배포 체크리스트
 
 - [ ] `AUTH_SECRET` — `openssl rand -base64 32`

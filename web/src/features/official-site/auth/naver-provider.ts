@@ -9,7 +9,10 @@ type NaverProfile = {
   };
 };
 
-export function NaverProvider(): OAuthConfig<NaverProfile> {
+export function NaverProvider(options: {
+  clientId: string;
+  clientSecret: string;
+}): OAuthConfig<NaverProfile> {
   return {
     id: "naver",
     name: "Naver",
@@ -32,8 +35,8 @@ export function NaverProvider(): OAuthConfig<NaverProfile> {
         return (await res.json()) as NaverProfile;
       },
     },
-    clientId: process.env.NAVER_CLIENT_ID,
-    clientSecret: process.env.NAVER_CLIENT_SECRET,
+    clientId: options.clientId,
+    clientSecret: options.clientSecret,
     profile(profile) {
       const r = profile.response;
       return {
