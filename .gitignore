@@ -1,0 +1,5 @@
+# Only web/ is tracked in this repository
+*
+!.gitignore
+!web/
+!web/**

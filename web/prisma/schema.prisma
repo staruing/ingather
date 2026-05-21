@@ -1,0 +1,97 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String      @id @default(cuid())
+  naverId      String      @unique
+  nickname     String
+  profileImage String?
+  role         String      @default("user")
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  boardItems   BoardItem[]
+  reports      Report[]
+}
+
+model BroadcastInfo {
+  id          String    @id @default(cuid())
+  status      String    @default("offline")
+  title       String    @default("별으잉")
+  platformUrl String?
+  scheduledAt DateTime?
+  updatedAt   DateTime  @updatedAt
+}
+
+model SiteLink {
+  id        String   @id @default(cuid())
+  label     String
+  url       String
+  icon      String?
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+}
+
+model HomeAsset {
+  id        String   @id @default(cuid())
+  type      String
+  url       String
+  alt       String?
+  createdAt DateTime @default(now())
+}
+
+model StickerPack {
+  id       String    @id @default(cuid())
+  type     String
+  name     String
+  isActive Boolean   @default(true)
+  stickers Sticker[]
+}
+
+model Sticker {
+  id        String      @id @default(cuid())
+  packId    String
+  pack      StickerPack @relation(fields: [packId], references: [id], onDelete: Cascade)
+  imageUrl  String
+  name      String
+  sortOrder Int         @default(0)
+  boardItems BoardItem[]
+}
+
+model BoardItem {
+  id        String   @id @default(cuid())
+  boardId   String   @default("main")
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String
+  stickerId String?
+  sticker   Sticker? @relation(fields: [stickerId], references: [id], onDelete: SetNull)
+  text      String?
+  textColor String?
+  fontSize  Int?
+  x         Float
+  y         Float
+  rotation  Float    @default(0)
+  scale     Float    @default(1)
+  zIndex    Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  reports   Report[]
+}
+
+model Report {
+  id           String    @id @default(cuid())
+  boardItemId  String
+  boardItem    BoardItem @relation(fields: [boardItemId], references: [id], onDelete: Cascade)
+  reporterId   String
+  reporter     User      @relation(fields: [reporterId], references: [id], onDelete: Cascade)
+  reason       String?
+  status       String    @default("pending")
+  createdAt    DateTime  @default(now())
+}
