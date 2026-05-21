@@ -82,7 +82,11 @@ export function StickerBoard() {
     });
     const data = await res.json();
     if (!res.ok) {
-      setError(data.error ?? "배치 실패");
+      setError(
+        res.status === 401
+          ? "로그인 세션을 확인할 수 없거나 DB가 연결되지 않았습니다."
+          : (data.error ?? "배치 실패"),
+      );
       return;
     }
     setItems((prev) => {
@@ -113,7 +117,11 @@ export function StickerBoard() {
     });
     const data = await res.json();
     if (!res.ok) {
-      setError(data.error ?? "배치 실패");
+      setError(
+        res.status === 401
+          ? "로그인 세션을 확인할 수 없거나 DB가 연결되지 않았습니다."
+          : (data.error ?? "배치 실패"),
+      );
       return;
     }
     setTextInput("");
@@ -213,7 +221,8 @@ export function StickerBoard() {
       )}
       {isLoggedIn && !userId && (
         <p className="text-sm text-amber-300">
-          세션 정보를 불러오지 못했습니다. 로그아웃 후 다시 로그인해 주세요.
+          로그인은 되었지만 서버 DB에 연결되지 않았습니다. Vercel에 PostgreSQL
+          DATABASE_URL을 설정한 뒤 다시 배포해 주세요.
         </p>
       )}
 
