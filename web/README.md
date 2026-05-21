@@ -62,7 +62,7 @@ Root Directory를 비워 두면 저장소 루트에 `package.json`이 없어 빌
 | `npm run dev:next` | Socket 없이 Next만 |
 | `npm run build` | Prisma generate + production build |
 | `npm run db:push` | DB 스키마 적용 |
-| `npm run db:seed` | 초기 데이터·기본 스티커 |
+| `npm run db:seed` | 로컬 초기 데이터 (배포/Vercel+Neon은 API가 자동 생성) |
 
 ## 구조
 

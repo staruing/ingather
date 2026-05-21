@@ -21,6 +21,8 @@ export function StickerBoard() {
 
   const [items, setItems] = useState<BoardItemData[]>([]);
   const [stickers, setStickers] = useState<StickerData[]>([]);
+  const [stickersLoading, setStickersLoading] = useState(true);
+  const [stickersLoadError, setStickersLoadError] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [textInput, setTextInput] = useState("");
   const [textColor, setTextColor] = useState("#ffffff");
@@ -45,8 +47,15 @@ export function StickerBoard() {
 
   useEffect(() => {
     loadBoard();
+    setStickersLoading(true);
+    setStickersLoadError(null);
     fetch("/api/stickers")
-      .then((r) => r.json())
+      .then(async (r) => {
+        if (!r.ok) {
+          throw new Error(`stickers ${r.status}`);
+        }
+        return r.json();
+      })
       .then((packs) => {
         const all: StickerData[] = [];
         for (const p of packs) {
@@ -56,7 +65,12 @@ export function StickerBoard() {
         }
         setStickers(all);
       })
-      .catch(console.error);
+      .catch(() => {
+        setStickersLoadError(
+          "스티커를 불러오지 못했습니다. 잠시 후 새로고침해 주세요.",
+        );
+      })
+      .finally(() => setStickersLoading(false));
   }, [loadBoard]);
 
   const handleSocketEvent = useCallback((event: BoardEvent) => {
@@ -298,11 +312,16 @@ export function StickerBoard() {
 
       <div className="sticky bottom-0 z-10 space-y-3 rounded-2xl border border-violet-500/25 bg-[#0f0a1a]/95 p-4 backdrop-blur md:static">
           <div className="flex flex-wrap gap-2">
-            {stickers.length === 0 && (
+            {stickersLoading && (
+              <p className="text-sm text-violet-400">스티커 불러오는 중…</p>
+            )}
+            {stickersLoadError && (
+              <p className="text-sm text-amber-300">{stickersLoadError}</p>
+            )}
+            {!stickersLoading && !stickersLoadError && stickers.length === 0 && (
               <p className="text-sm text-violet-400">
-                스티커가 없습니다. 터미널에서{" "}
-                <code className="text-violet-200">npm run db:seed</code> 실행 후
-                새로고침하세요.
+                표시할 스티커가 없습니다. 관리자 페이지에서 스티커를 추가할 수
+                있습니다.
               </p>
             )}
             {stickers.map((s) => (

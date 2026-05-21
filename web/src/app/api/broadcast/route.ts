@@ -1,18 +1,20 @@
 import { NextResponse } from "next/server";
+import { ensureDefaultData } from "@/lib/ensure-default-data";
 import { prisma } from "@/lib/prisma";
 
 export async function GET() {
-  let info = await prisma.broadcastInfo.findFirst({
+  try {
+    await ensureDefaultData(prisma);
+  } catch (err) {
+    console.error("[api/broadcast] ensureDefaultData failed", err);
+    return NextResponse.json(
+      { error: "Database unavailable" },
+      { status: 503 },
+    );
+  }
+
+  const info = await prisma.broadcastInfo.findFirst({
     orderBy: { updatedAt: "desc" },
   });
-  if (!info) {
-    info = await prisma.broadcastInfo.create({
-      data: {
-        status: "offline",
-        title: "별으잉",
-        platformUrl: null,
-      },
-    });
-  }
   return NextResponse.json(info);
 }
